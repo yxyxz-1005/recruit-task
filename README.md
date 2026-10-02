@@ -14,8 +14,13 @@
 | 个人主页 | https://yxyxz-1005.github.io/recruit-task/ |
 | 贪吃蛇游戏 | https://yxyxz-1005.github.io/recruit-task/game/ |
 | 贪吃蛇 AI 演示（打开即自动玩） | https://yxyxz-1005.github.io/recruit-task/game/?mode=ai&speed=25 |
+| 个人简介 PDF（网页直链） | [个人简介.pdf](https://yxyxz-1005.github.io/recruit-task/%E4%B8%AA%E4%BA%BA%E7%AE%80%E4%BB%8B.pdf) |
+| 个人简介 PDF（仓库文件） | [个人简介.pdf](https://github.com/yxyxz-1005/recruit-task/blob/main/%E4%B8%AA%E4%BA%BA%E7%AE%80%E4%BB%8B.pdf) |
 
 > GitHub Pages 开启方式：仓库 Settings → Pages → Source 选 `Deploy from a branch`，Branch 选 `main` / `root`。
+>
+> PDF 给了两个入口：`.github.io` 走 Pages CDN，国内打开比 GitHub 的 blob 预览快得多；
+> blob 那个是仓库原始文件，用来确认文件确实在仓库里。
 
 ---
 
@@ -24,6 +29,7 @@
 ```
 recruit-task/
 ├── index.html              个人主页（纯 HTML + CSS，零 JS 依赖）
+├── 个人简介.pdf             个人简介（已压缩，见文末踩坑记录）
 ├── game/
 │   ├── index.html          贪吃蛇界面层：渲染、键盘与按钮交互
 │   └── snake-core.js       贪吃蛇纯逻辑层：规则 + AI 决策（不碰 DOM）
@@ -231,6 +237,7 @@ python circuit/rc_filter.py
 | 同上，AI 完全不追食物 | 障碍图把蛇头也标成了墙 | 蛇头、蛇尾都不算障碍，只把中间身体当墙 |
 | GitHub 网页打不开但 `git` 能通 | 校园网 DNS 解析不稳定 | 换用公共 DNS；网页用手机热点，`git push` 不受影响 |
 | 深浅色切换后刷新会跳回浅色 | 纯 CSS 方案无法记忆状态 | 加 6 行内联脚本写入 `localStorage` |
+| 个人简介 PDF 在 GitHub 上点开是空白 | 6.7 MB，8 张图全是无损 Flate 编码（含一张 2392×3312 的证件照），预览器放弃渲染 | 用 PyMuPDF 把超 140 dpi 的图重编码为 JPEG（110 dpi / 质量 80）并子集化字体，压到 1.37 MB（20%），页数与文字均未丢失 |
 
 ---
 
