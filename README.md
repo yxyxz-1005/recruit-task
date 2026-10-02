@@ -28,7 +28,9 @@ recruit-task/
 │   ├── index.html          贪吃蛇界面层：渲染、键盘与按钮交互
 │   └── snake-core.js       贪吃蛇纯逻辑层：规则 + AI 决策（不碰 DOM）
 ├── tools/
-│   └── stress-test.js      AI 压测脚本（Node 运行，输出达标率）
+│   ├── stress-test.js      AI 压测脚本（Node 运行，输出达标率）
+│   ├── inspect-ai.js       逐步打印 AI 的决策过程（讲解 / 排查用）
+│   └── browser-smoke-test.js  无头浏览器冒烟测试（零依赖走 CDP）
 ├── docs/
 │   ├── prompt-log.md       AI 提示词迭代记录
 │   └── code-notes.md       关键代码逐段讲解（用自己的话）
@@ -199,9 +201,18 @@ AI 给的第一版 AI 算法**压测 100 局达标率 0%**，蛇只会闷头撞�
 **AI 压测**：需要 Node.js。
 
 ```bash
-node tools/stress-test.js        # 默认 100 局
+node tools/stress-test.js        # 默认 100 局，统计达标率
 node tools/stress-test.js 300    # 指定局数
+node tools/inspect-ai.js 80      # 逐步打印 AI 前 80 步的决策依据
 ```
+
+**页面冒烟测试**：需要本机装有 Chrome 或 Edge（找不到时用 `CHROME_PATH` 指定）。
+
+```bash
+node tools/browser-smoke-test.js
+```
+
+它会自动打开页面并检查：有没有 JS 报错、canvas 尺寸是否为正方形、指标条标签有没有溢出换行、AI 模式能不能真的跑起来、网页版压测结论是否和命令行版一致。这个脚本抓到过一个命令行测不出来的显示问题——顶部指标条的标签换行、数值被挤成两行。
 
 **电路仿真**：需要 Python 3 与 PySpice。
 
