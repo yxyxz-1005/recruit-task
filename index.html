@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="闫心语的个人主页 · 集成电路设计与集成系统">
+  <title>闫心语 · 个人主页</title>
+  <!-- 站点图标：一枚小芯片 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='8' y='8' width='16' height='16' rx='2.5' fill='%234a6f9e'/%3E%3Cg stroke='%234a6f9e' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 8V4M20 8V4M12 24v4M20 24v4M8 12H4M8 20H4M24 12h4M24 20h4'/%3E%3C/g%3E%3Ccircle cx='12.5' cy='12.5' r='1.6' fill='%23fcfdfe'/%3E%3C/svg%3E">
+  <!--
+    使用说明：正文文字可直接修改；右上角圆形按钮切换深色 / 浅色主题。
+    主题切换由隐藏的 checkbox + 纯 CSS 实现，全页无 JavaScript、无外部资源。
+  -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      color-scheme: light;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono",
+        "Courier New", monospace;
+      /* 低饱和蓝灰理工配色 */
+      --accent: #4a6f9e;
+      --text: #2b3440;
+      --text-muted: #55616f;
+      --text-secondary: #7b8794;
+      --border: #dde3ea;
+      --border-strong: #c3cdd9;
+      --bg: #eef1f5;
+      --card: #fcfdfe;
+      --tag-bg: #f1f4f8;
+      --grid-line: rgba(90, 110, 140, 0.07);
+    }
+
+    body {
+      font-family: var(--sans);
+      line-height: 1.8;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 选中文字使用主题蓝 */
+    ::selection {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ===== 深浅色主题切换（checkbox + 兄弟选择器，纯 CSS） ===== */
+    .theme-switch {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      margin: 0;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      background: var(--card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.2s ease, background-color 0.2s ease,
+        border-color 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--accent);
+    }
+
+    .icon-sun {
+      display: none;
+    }
+
+    /* 勾选后整页切换为深色变量 */
+    .theme-switch:checked ~ .page {
+      color-scheme: dark;
+      --accent: #7fa6cf;
+      --text: #d7dee7;
+      --text-muted: #9fabb9;
+      --text-secondary: #76828f;
+      --border: #2a3440;
+      --border-strong: #3c4a59;
+      --bg: #11151a;
+      --card: #181e26;
+      --tag-bg: #1e2631;
+      --grid-line: rgba(140, 170, 210, 0.05);
+    }
+
+    .theme-switch:checked ~ .page .icon-sun {
+      display: block;
+    }
+
+    .theme-switch:checked ~ .page .icon-moon {
+      display: none;
+    }
+
+    .theme-switch:focus-visible ~ .page .theme-toggle {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* 旧浏览器不支持 :has() 时会忽略此条，不影响功能 */
+    body:has(.theme-switch:checked) {
+      background: #11151a;
+      color-scheme: dark;
+    }
+
+    /* ===== 页面骨架：蓝图网格底纹 ===== */
+    .page {
+      min-height: 100vh;
+      background:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      max-width: 660px;
+      margin: 0 auto;
+      padding: 48px 20px 32px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 44px 40px 36px;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* 卡片对角细线角标（蓝图定位标记） */
+    .card::before,
+    .card::after {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .card::before {
+      top: -7px;
+      left: -7px;
+      border-top: 1px solid var(--accent);
+      border-left: 1px solid var(--accent);
+    }
+
+    .card::after {
+      bottom: -7px;
+      right: -7px;
+      border-bottom: 1px solid var(--accent);
+      border-right: 1px solid var(--accent);
+    }
+
+    /* ===== 头部 ===== */
+    .profile {
+      position: relative;
+      text-align: center;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* 走线端点：压在分隔线右端的小方点 */
+    .profile::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: -3px;
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+    }
+
+    /* 走线起点：左端的小方点，信号从左流向右 */
+    .profile::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 5px;
+      height: 5px;
+      background: var(--border-strong);
+    }
+
+    /* 圆形头像：外圈细线 + 钢蓝圆底 */
+    .avatar {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 34px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .avatar::before {
+      content: "";
+      position: absolute;
+      inset: -9px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      transition: border-color 0.2s ease;
+    }
+
+    .profile h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .major {
+      margin-top: 8px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .major-en {
+      margin-top: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+    }
+
+    /* ===== 分区 ===== */
+    section {
+      padding: 26px 0;
+    }
+
+    section + section {
+      border-top: 1px solid var(--border);
+    }
+
+    section h2 {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    /* 编号采用芯片位号风格（PCB 上 IC 的标号以 U 开头） */
+    section h2 .no {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+
+    section h2 em {
+      margin-left: auto;
+      font-style: normal;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+    }
+
+    .about p {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    /* 兴趣爱好：元器件标签样式 */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tags span {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 13px;
+      border: 1px solid var(--border-strong);
+      border-radius: 3px;
+      background: var(--tag-bg);
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      transition: background-color 0.2s ease, border-color 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .tags span::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      margin-right: 8px;
+      background: var(--accent);
+    }
+
+    /* 联系方式：原理图清单样式 */
+    .contact {
+      list-style: none;
+    }
+
+    .contact li {
+      display: flex;
+      align-items: baseline;
+      padding: 9px 2px;
+      font-size: 15px;
+    }
+
+    .contact li + li {
+      border-top: 1px dashed var(--border);
+    }
+
+    .contact .label {
+      flex: 0 0 76px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: 1.5px;
+      color: var(--text-secondary);
+    }
+
+    .contact a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .contact a:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    footer {
+      margin-top: 26px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    /* 小屏适配 */
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 22px 28px;
+      }
+
+      .theme-toggle {
+        top: 12px;
+        right: 12px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .page,
+      .card,
+      .card::before,
+      .card::after,
+      .theme-toggle,
+      .avatar,
+      .avatar::before,
+      .tags span {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 主题开关：隐藏的 checkbox，配合上方 CSS 实现纯 CSS 换肤 -->
+  <input type="checkbox" id="theme-toggle" class="theme-switch" aria-label="切换深色主题">
+  <script>
+    /* 主题记忆：刷新 / 跳转回来时不再回到浅色。约 6 行内联脚本，仍然零外部依赖。
+       与 game/index.html 使用同一个 localStorage 键，所以两个页面主题是联动的。 */
+    (function () {
+      var sw = document.getElementById('theme-toggle');
+      try { sw.checked = localStorage.getItem('yx-theme') === 'dark'; } catch (e) {}
+      sw.addEventListener('change', function () {
+        try { localStorage.setItem('yx-theme', sw.checked ? 'dark' : 'light'); } catch (e) {}
+      });
+    })();
+  </script>
+
+  <div class="page">
+    <label class="theme-toggle" for="theme-toggle" title="切换深色 / 浅色主题">
+      <!-- 月亮（浅色模式下显示，点击进入深色） -->
+      <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <!-- 太阳（深色模式下显示，点击回到浅色） -->
+      <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </label>
+
+    <main class="container">
+      <div class="card">
+
+        <header class="profile">
+          <div class="avatar">闫</div>
+          <h1>闫心语</h1>
+          <p class="major">集成电路设计与集成系统 · 广东工业大学 · 大一</p>
+          <p class="major-en">INTEGRATED CIRCUIT DESIGN &amp; INTEGRATED SYSTEMS</p>
+        </header>
+
+        <section class="about">
+          <h2><span class="no">U1</span>关于我<em>ABOUT</em></h2>
+          <p>
+            我是广东工业大学集成电路设计与集成系统专业的大一新生闫心语。
+            现阶段正在夯实 C 语言、电路等专业基础，对芯片与集成电路领域抱有很强的好奇心，
+            乐于动手实践，在试错中积累经验。课余生活里，我喜欢打羽毛球、阅读、唱歌，
+            也享受钻研编程的过程。希望保持持续学习的状态，不断提升自我，
+            欢迎通过下方方式与我交流。
+          </p>
+        </section>
+
+        <section>
+          <h2><span class="no">U2</span>兴趣爱好<em>INTERESTS</em></h2>
+          <div class="tags">
+            <span>羽毛球</span>
+            <span>阅读</span>
+            <span>编程学习</span>
+            <span>唱歌</span>
+          </div>
+        </section>
+
+        <section>
+          <h2><span class="no">U3</span>项目<em>PROJECTS</em></h2>
+          <ul class="contact">
+            <li>
+              <span class="label">GAME</span>
+              <a href="game/">贪吃蛇 · 手动游玩 + AI 自动玩</a>
+            </li>
+            <li>
+              <span class="label">REPO</span>
+              <a href="https://github.com/yxyxz-1005/recruit-task" target="_blank" rel="noopener">github.com/yxyxz-1005/recruit-task</a>
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2><span class="no">U4</span>联系方式<em>CONTACT</em></h2>
+          <ul class="contact">
+            <li><span class="label">TEL</span><a href="tel:13069515276">13069515276</a></li>
+            <li><span class="label">MAIL</span><a href="mailto:2568980367@qq.com">2568980367@qq.com</a></li>
+            <li><span class="label">GITHUB</span><a href="https://github.com/yxyxz-1005" target="_blank" rel="noopener">github.com/yxyxz-1005</a></li>
+          </ul>
+        </section>
+
+      </div>
+
+      <!-- 芯片丝印：YXY-2026 REV 1.0 · 感谢阅读源码 -->
+      <footer>© 2026 闫心语 · REV 1.0 · HOSTED ON GITHUB PAGES</footer>
+    </main>
+  </div>
+</body>
+</html>
