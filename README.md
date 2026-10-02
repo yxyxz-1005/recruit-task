@@ -254,9 +254,12 @@ python circuit/nmos_amp.py       # 电路③ NMOS 共源放大器
 ```
 
 三个脚本都会在终端打印「手算 vs 仿真」对比表，并把波形图输出到 `circuit/*.png`。
-Windows 上 `pip install PySpice` 装的包**不含 ngspice 动态库**，首次运行会报
-`cannot load library ngspice.dll error 0x7e`——解决过程见
-[`circuit/README.md`](circuit/README.md#踩坑记录)，`circuit/spice_env.py` 负责自动定位并加载这些库。
+
+Windows 上也可以用 `circuit/run.bat` 一键运行（`run.bat thevenin` / `run.bat nmos` / `run.bat all`），它会自动找到装了 PySpice 的解释器。
+
+> **Windows 用户注意**：`pip install PySpice` 装的包**不含 ngspice 动态库**，
+> 首次运行会报 `cannot load library ngspice.dll error 0x7e`——解决过程见
+> [`circuit/README.md`](circuit/README.md#踩坑记录)，`circuit/spice_env.py` 负责自动定位并加载这些库。
 
 ---
 
