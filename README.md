@@ -281,7 +281,7 @@ assert abs(0.5 * KP * (W / L) - K_TARGET) < 1e-9, "等效 K 与题卡不符"
 - [x] 语义化提交信息（`feat:` / `fix:` / `docs:` / `chore:`）
 - [x] 真实创建分支并合并（见提交历史）
 - [x] GitHub Pages 部署
-- [ ] 开启两步验证（2FA）
+- [x] 开启两步验证（2FA）：使用验证器 App（TOTP，Authy）扫码绑定，恢复码已离线保存
 
 ### 什么是"分支"和"合并"
 
