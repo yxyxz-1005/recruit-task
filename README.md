@@ -40,7 +40,13 @@ recruit-task/
 ├── docs/
 │   ├── prompt-log.md       AI 提示词迭代记录
 │   └── code-notes.md       关键代码逐段讲解（用自己的话）
-├── circuit/                进阶挑战：PySpice 电路仿真脚本
+├── circuit/                进阶挑战：PySpice 电路仿真
+│   ├── README.md           手算过程、完整对比表、10 条踩坑记录
+│   ├── spice_env.py        公共引导模块：加载 ngspice 库 + 中文字体 + 对比表输出
+│   ├── rc_lowpass.py       电路① RC 低通滤波器
+│   ├── thevenin.py         电路② 戴维南等效电路
+│   ├── nmos_amp.py         电路③ NMOS 共源放大器
+│   └── *.png               四个电路的波形图与特性曲线（属交付物，故不忽略）
 ├── LICENSE                 MIT
 └── README.md
 ```
@@ -145,15 +151,33 @@ recruit-task/
 
 选了 PySpice 而不是 CROC 论文，理由：本专业是集成电路设计与集成系统，SPICE 是本行工具；而 CROC 那条路要 Verilator + Yosys，Windows 下得靠 WSL，环境风险太高。
 
-三个电路：
+三个电路，每个都按 **手算 → 仿真 → 对比 → 误差分析** 四步做，不是"跑出波形就算完成"：
 
-| # | 电路 | 方法 | 产出 |
+| # | 电路 | 验证内容 | 手算 vs 仿真 |
 | --- | --- | --- | --- |
-| 1 | RC 低通滤波器 | 手算 τ / fc + 瞬态与 AC 仿真 | 方波响应波形、波特图、对比表 |
-| 2 | 戴维南等效 | 两次仿真求 V_oc 与 I_sc + 接负载验证 | 等效参数表、验证表 |
-| 3 | NMOS 共源放大电路 | 手算静态工作点、判断饱和区、算 gm 与 Av + 仿真对拍 | 手算/仿真对比表 + 误差分析 |
+| 1 | RC 低通滤波器 | 时间常数 τ、截止频率 f_c、充放电过程 | 误差 < 1% |
+| 2 | 戴维南等效 | V_oc、R_th（三种方法互证）、接负载逐项验证 | 误差 < 0.001% |
+| 3 | NMOS 共源放大电路 | 饱和区判据、gm、ro、Av、带宽 | 误差 < 0.1% |
 
-> 本节内容与数据在 10/6 完成仿真后补全。
+**几个值得说的点：**
+
+- **戴维南的 R_th 用三条互相独立的路径求**：`V_oc ÷ I_sc`、独立源置零后注入 1 A 测试电流、接已知负载反推。三者吻合到 0.0004%。再把原电路和等效电路分别接 8 组不同负载，端电压差落在浮点精度极限（10⁻¹⁰ V 量级）——这说明在线性电路里戴维南等效是精确关系式而非近似。
+- **NMOS 手算做了两套**：理想平方律、含沟道长度调制。前者的 I_D、gm、|Av| 三项偏差**都是同一个 8.27%**，等于直接指出"漏了一项修正"；补上 λ 后误差降到 0.00%～0.08%。
+- **两条完全独立的技术路线交叉验证**：交流分析（频域线性化）给出增益 1.7050，瞬态分析（时域数值积分）给出 1.7049。数学上完全不同的两件事给出同一个数，这是仿真结果可信的最强证据。
+- **一处反直觉的公式**：`ro = 1/(λ·I_D0)` 用的是不含 λ 的基准电流，不是含 λ 修正后的实际电流——下标差一个，结果差 8%。
+- **波形不是"跑出来就行"**：每个电路都要求手算值和仿真值能对上，对不上的地方必须找出原因。这条比波形本身重要。
+
+**图形产物：**
+
+<img src="circuit/rc_bode.png" width="700">
+
+<img src="circuit/thevenin_load.png" width="700">
+
+<img src="circuit/nmos_amp.png" width="820">
+
+<img src="circuit/nmos_transient.png" width="700">
+
+详细手算过程、完整对比表和 10 条踩坑记录见 **[`circuit/README.md`](circuit/README.md)**。
 
 ---
 
@@ -224,8 +248,15 @@ node tools/browser-smoke-test.js
 
 ```bash
 pip install PySpice numpy matplotlib
-python circuit/rc_filter.py
+python circuit/rc_lowpass.py     # 电路① RC 低通滤波器
+python circuit/thevenin.py       # 电路② 戴维南等效
+python circuit/nmos_amp.py       # 电路③ NMOS 共源放大器
 ```
+
+三个脚本都会在终端打印「手算 vs 仿真」对比表，并把波形图输出到 `circuit/*.png`。
+Windows 上 `pip install PySpice` 装的包**不含 ngspice 动态库**，首次运行会报
+`cannot load library ngspice.dll error 0x7e`——解决过程见
+[`circuit/README.md`](circuit/README.md#踩坑记录)，`circuit/spice_env.py` 负责自动定位并加载这些库。
 
 ---
 
