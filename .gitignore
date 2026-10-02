@@ -1,0 +1,34 @@
+# ===== 操作系统 / 编辑器产生的垃圾文件 =====
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+
+# VS Code：保留共享的团队配置，忽略个人设置
+.vscode/*
+!.vscode/settings.json
+
+# ===== Node =====
+# 本项目没有构建步骤，网页为纯静态；留着以防以后引入工具链
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ===== Python（进阶挑战：PySpice 电路仿真） =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ===== 仿真临时产物 =====
+# 注意：波形图（.png）是要提交的成果，不在此忽略
+circuit/*.raw
+circuit/*.log
+circuit/*.spice.tmp
+
+# ===== 其他临时文件 =====
+*.tmp
+*.bak
+~$*
