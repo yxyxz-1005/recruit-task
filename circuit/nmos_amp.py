@@ -15,35 +15,43 @@
                   ─┴────┴─ GND
                  （源极接地 = 共源）
 
-器件参数（level=1 Shichman-Hodges 模型）：
-    V_TO = 1 V      阈值电压
-    KP   = 200 µA/V²  本征跨导系数
-    W/L  = 8 µm / 2 µm = 4
-    λ    = 0.02 V⁻¹   沟道长度调制系数
+【参数来源】题卡给定，不是我自己假设的：
+    VDD = 5 V，Rd = 2 kΩ
+    Rg1 = 60 kΩ、Rg2 = 40 kΩ  →  V_G = VDD · Rg2/(Rg1+Rg2) = 5 × 40/100 = 2 V
+    NMOS：K = 0.8 mA/V²、V_th = 1 V、λ = 0.02 V⁻¹
+    输入 Vi = 10 mV（幅值）、f = 1 kHz 正弦
 
-偏置：栅极用理想电压源给 V_GS = 2 V（这样能把注意力集中在放大特性上，
-      真实电路会改用分压偏置 + 耦合电容，影响的是输入阻抗而非增益，
-      放在最后的延伸思考里）。
+  关于 K 的处理（这里最容易踩坑）：
+      题卡给的是 K = 0.8 mA/V²，指 I_D = K·(V_GS−V_th)² 这个形式里的 K。
+      而 SPICE 的 level=1 模型里，I_D = ½·KP·(W/L)·V_ov²，KP 是 μCox。
+      题卡没有给 W/L，所以我把两者对齐：取 KP = 200 µA/V²、W/L = 8，
+      使 ½·KP·(W/L) = ½ × 0.2 × 8 = 0.8 mA/V²，正好等于题卡的 K。
+      —— 第一版我随手取了 W/L = 4，等效 K 只有 0.4 mA/V²，
+         结果整组数据差了一倍，是错的。
+
+偏置：栅极用理想电压源给 V_G = 2 V（等效于题卡 Rg1/Rg2 分压的结果）。
+      题卡说 Cb1 视为足够大，即耦合电容对 1 kHz 信号近似短路、只隔直，
+      所以在直流分析里可以直接把信号源看成 2 V 直流。
 
 手算分两套，这是本脚本最有价值的地方：
 
   ① 理想平方律模型（先忽略 λ，教材上的入门算法）
-       V_ov = V_GS − V_TO = 2 − 1 = 1 V
-       I_D  = ½ · KP · (W/L) · V_ov² = ½ × 200µ × 4 × 1² = 0.4 mA
-       V_DS = VDD − I_D·R_D = 5 − 0.4m × 2000 = 4.2 V
-       饱和判据 V_DS > V_ov → 4.2 > 1，工作在饱和区 ✓
+       V_ov = V_GS − V_th = 2 − 1 = 1 V
+       I_D  = K · V_ov² = 0.8m × 1² = 0.8 mA
+       V_DS = VDD − I_D·Rd = 5 − 0.8m × 2000 = 3.4 V
+       饱和判据 V_DS > V_ov → 3.4 > 1，工作在饱和区 ✓
 
   ② 含沟道长度调制（把 λ 算进去，更接近真实器件）
-       I_D = ½·KP·(W/L)·V_ov²·(1 + λ·V_DS)，而 V_DS = VDD − I_D·R_D，
+       I_D = K·V_ov²·(1 + λ·V_DS)，而 V_DS = VDD − I_D·Rd，
        两个式子互相耦合，联立求解：
-       I_D = k(1+λVDD) / (1 + k·λ·R_D)，其中 k = ½·KP·(W/L)·V_ov²
-           = 0.4m × 1.1 / (1 + 0.016) = 0.4331 mA
-       V_DS = 5 − 0.4331m × 2000 = 4.1339 V
+       I_D = k(1+λVDD) / (1 + k·λ·Rd)，其中 k = K·V_ov² = 0.8 mA
+           = 0.8m × 1.1 / (1 + 0.032) = 0.8527 mA
+       V_DS = 5 − 0.8527m × 2000 = 3.2946 V
 
   小信号参数：
-       gm = ∂I_D/∂V_GS = KP·(W/L)·V_ov·(1 + λ·V_DS)   （理想：2I_D/V_ov）
-       ro = 1 / (λ · I_D)
-       Av = −gm · (R_D ∥ ro)      ← 负号表示共源放大器输出反相 180°
+       gm = ∂I_D/∂V_GS = 2K·V_ov·(1 + λ·V_DS)   （理想：2K·V_ov = 1.6 mA/V）
+       ro = 1 / (λ · I_D0)     ← 注意用的是「不含 λ 的基准电流」，见文件末尾
+       Av = −gm · (Rd ∥ ro)    ← 负号表示共源放大器输出反相 180°
 """
 
 import numpy as np
@@ -57,15 +65,24 @@ from PySpice.Unit import *
 # ============================================================
 # 参数
 # ============================================================
-VDD = 5.0            # V
-RD = 2000.0          # Ω
-VGS_Q = 2.0          # V，静态栅源电压
-VTO = 1.0            # V
-KP = 200e-6          # A/V²
-W = 8e-6             # m
-L = 2e-6             # m
-LAMBDA = 0.02        # 1/V
-CL = 10e-12          # F，负载电容（决定放大器带宽）
+VDD = 5.0            # V       题卡给定
+RD = 2000.0          # Ω       题卡给定 Rd = 2 kΩ
+RG1 = 60e3           # Ω       题卡给定
+RG2 = 40e3           # Ω       题卡给定
+VGS_Q = VDD * RG2 / (RG1 + RG2)   # = 2.0 V，由 Rg1/Rg2 分压得到
+VTO = 1.0            # V       题卡给定 V_th
+KP = 200e-6          # A/V²    本征跨导系数（自取，见下方说明）
+W = 8e-6             # m       自取
+L = 1e-6             # m       自取，使 W/L = 8
+LAMBDA = 0.02        # 1/V     题卡给定 λ
+CL = 10e-12          # F，负载电容（题卡未给，自取；只影响带宽，不影响 1 kHz 增益）
+
+# 题卡给的是 K = 0.8 mA/V²（I_D = K·V_ov² 形式），而 SPICE level=1 用
+# I_D = ½·KP·(W/L)·V_ov²。两者对齐需要 ½·KP·(W/L) = K，即 W/L = 2K/KP = 8。
+# 这里校验一次，防止以后改参数时悄悄算错。
+K_TARGET = 0.8e-3    # A/V²，题卡给定
+K_EFF = 0.5 * KP * (W / L)
+assert abs(K_EFF - K_TARGET) < 1e-9, f"等效 K = {K_EFF} 与题卡 {K_TARGET} 不符"
 
 MOS_PARAMS = dict(level=1, kp=KP, vto=VTO, lambda_=LAMBDA, w=W, l=L)
 W_OVER_L = W / L
@@ -91,8 +108,7 @@ VDS_LAM = VDD - ID_LAM * RD
 GM_LAM = KP * W_OVER_L * V_OV * (1 + LAMBDA * VDS_LAM)
 # ro 这里是本脚本最反直觉的一处（详见文件末尾的误差分析）：
 # 输出电导 gds = ∂I_D/∂V_DS = λ · I_D0，用的是「不含 λ 的基准电流 I_D0」，
-# 而不是含 λ 修正后的实际电流。所以 ro = 1/(λ·I_D0) = 125 kΩ，
-# 与 λ 修正后的 I_D = 0.4331 mA 无关。
+# 而不是含 λ 修正后的实际电流 I_D。所以 ro 与 λ 修正后的 I_D 无关。
 RO_LAM = 1.0 / (LAMBDA * K_PEAK)
 ROUT_LAM = RD * RO_LAM / (RD + RO_LAM)
 AV_LAM = -GM_LAM * ROUT_LAM
@@ -279,26 +295,26 @@ spice_env.note(
     对照「理想平方律」：I_D 差 {spice_env.rel_err(id_sim, ID_IDEAL):.2f}%，gm 差 {spice_env.rel_err(gm_sim, GM_IDEAL):.2f}%，|Av| 差 {spice_env.rel_err(av_sim, abs(AV_IDEAL)):.2f}%
     对照「含 λ 修正」：  I_D 差 {spice_env.rel_err(id_sim, ID_LAM):.2f}%，gm 差 {spice_env.rel_err(gm_sim, GM_LAM):.2f}%，|Av| 差 {spice_env.rel_err(av_sim, abs(AV_LAM)):.2f}%
 
-    这三个量都是同一个 8.27%，说明偏差只有一个来源：漏掉了沟道长度调制。
-    修正之后误差降到 0.2% 以内（剩下的是数值精度），
+    这三个量都是同一个 {spice_env.rel_err(ID_LAM, ID_IDEAL):.2f}%，说明偏差只有一个来源：
+    漏掉了沟道长度调制。修正之后误差降到 0.2% 以内（剩下的是数值精度），
     所以问题从来不是仿真器算不准 —— 它的求解精度远高于此。
 
     但写这段代码的过程中我还犯过第二个错，比第一个更有意思：ro 的公式。
-    第一版我写 ro = 1/(λ·I_D)，代入含 λ 修正后的实际电流 0.4331 mA，
-    算出 115.45 kΩ；仿真却给 125 kΩ —— 正好是用「不含 λ 的基准电流
-    0.4 mA」算出来的那个数。
+    第一版我写 ro = 1/(λ·I_D)，代入含 λ 修正后的实际电流 {ID_LAM * 1e3:.4f} mA，
+    算出 {1 / (LAMBDA * ID_LAM) / 1000:.2f} kΩ；仿真却给 {RO_LAM / 1000:.2f} kΩ ——
+    正好是用「不含 λ 的基准电流 {ID_IDEAL * 1e3:.4f} mA」算出来的那个数。
 
     原因在 level=1 模型的定义：
-        I_D  = I_D0 · (1 + λ·V_DS)，其中 I_D0 = ½·KP·(W/L)·V_ov²（与 λ 无关）
+        I_D  = I_D0 · (1 + λ·V_DS)，其中 I_D0 = K·V_ov²（与 λ 无关）
         gds  = ∂I_D/∂V_DS = λ · I_D0     ← 是 I_D0，不是 I_D
     物理上也讲得通：沟道长度调制描述的是「V_DS 变化使有效沟道长度变化」，
     它的强度由基准电流决定；λ 带来的那部分额外直流电流，
     并不会再反过来影响输出电导。
-    所以 ro = 1/(λ·I_D0) = 125 kΩ，与 λ 修正无关 ——
+    所以 ro = 1/(λ·I_D0) = {RO_LAM / 1000:.1f} kΩ，与 λ 修正无关 ——
     这也解释了上表里 ro 那一行为什么两套手算值完全相同。
 
     另外注意 f_p：它由 R_out·C_L 决定，而 R_out = R_D ∥ ro。
-    因为 R_D (2 kΩ) 远小于 ro (125 kΩ)，所以 R_out ≈ R_D，
+    因为 R_D ({RD / 1000:.0f} kΩ) 远小于 ro ({RO_LAM / 1000:.1f} kΩ)，所以 R_out ≈ R_D，
     带宽对手算误差天然不敏感 —— 这是「输出节点被 R_D 主导」的直接体现。
     如果把 R_D 换成电流源负载（让 ro 变成主角），带宽就会对 ro 极其敏感。
 """
@@ -307,30 +323,32 @@ spice_env.note(
 # ------------------------------------------------------------
 # 第 4 步：瞬态验证（看波形，确认放大与反相）
 # ------------------------------------------------------------
-trans_amp = 20e-3     # 20 mV 输入，远在放大器的线性范围内
+trans_amp = 10e-3     # 题卡给定 Vi = 10 mV（幅值）
+F_SIG = 1000.0        # 题卡给定 f = 1 kHz
 t_circuit = Circuit("NMOS 共源放大器-瞬态")
 t_circuit.V("dd", "vdd", t_circuit.gnd, VDD @ u_V)
 # 源写法有讲究：必须把直流偏置写进 SIN 的第一个参数（VO 就是直流分量）。
 # 看起来更直观的 "DC 2V AC 1V SIN(...)" 在 ngspice 47 上会直接执行失败
 # （报 Command 'run' failed），而 PySpice 的 SinusoidalVoltageSource
 # 生成的恰好是那种写法 —— 所以这里手写 netlist 字符串。
-t_circuit.V("gg", "vg", t_circuit.gnd, f"SIN({VGS_Q}V {trans_amp}V 100kHz)")
+t_circuit.V("gg", "vg", t_circuit.gnd, f"SIN({VGS_Q}V {trans_amp}V {F_SIG}Hz)")
 t_circuit.R("d", "vdd", "vout", RD @ u_Ohm)
 t_circuit.MOSFET("M1", "vout", "vg", t_circuit.gnd, t_circuit.gnd, model="nmos1")
 t_circuit.model("nmos1", "nmos", **MOS_PARAMS)
 t_circuit.C("L", "vout", t_circuit.gnd, CL @ u_F)
 
+# 1 kHz 的周期是 1 ms，跑 5 个周期；每周期 200 个点足够画光滑波形
 tran = t_circuit.simulator(temperature=25, nominal_temperature=25).transient(
-    step_time=0.05 @ u_us, end_time=100 @ u_us)
+    step_time=5 @ u_us, end_time=5 @ u_ms)
 tt = np.array(tran.time)
 vv_in = np.array(tran["vg"]) - VGS_Q          # 去掉直流，只看交流分量
 vv_out = np.array(tran["vout"]) - vds_sim
 
 # 用后半段（已经进入稳态）估计实际增益
-half = tt > 50e-6
+half = tt > 3e-3
 gain_trans = (vv_out[half].max() - vv_out[half].min()) / (vv_in[half].max() - vv_in[half].min())
 
-print("【瞬态验证】100 kHz 正弦，输入 20 mV")
+print(f"【瞬态验证】{F_SIG / 1000:.0f} kHz 正弦，输入 {trans_amp * 1e3:.0f} mV")
 spice_env.compare([
     ("输出摆幅 / 输入摆幅", abs(AV_LAM), gain_trans, "", 5.0),
 ])
@@ -359,23 +377,23 @@ lin_rows = []
 for amp in levels:
     cc = Circuit(f"线性度-{amp}")
     cc.V("dd", "vdd", cc.gnd, VDD @ u_V)
-    cc.V("gg", "vg", cc.gnd, f"SIN({VGS_Q}V {amp}V 100kHz)")
+    cc.V("gg", "vg", cc.gnd, f"SIN({VGS_Q}V {amp}V {F_SIG}Hz)")
     cc.R("d", "vdd", "vout", RD @ u_Ohm)
     cc.MOSFET("M1", "vout", "vg", cc.gnd, cc.gnd, model="nmos1")
     cc.model("nmos1", "nmos", **MOS_PARAMS)
     cc.C("L", "vout", cc.gnd, CL @ u_F)
 
     tr = cc.simulator(temperature=25, nominal_temperature=25).transient(
-        step_time=0.05 @ u_us, end_time=100 @ u_us)
+        step_time=5 @ u_us, end_time=5 @ u_ms)
     ti = np.array(tr.time)
     vo = np.array(tr["vout"]) - vds_sim
     # 重采样到均匀网格再做 FFT：ngspice 的步长是自适应的，时间点并不均匀
-    grid = np.linspace(60e-6, 100e-6, 2000)   # 恰好覆盖 4 个 100 kHz 周期
+    grid = np.linspace(1e-3, 5e-3, 2000)      # 恰好覆盖 4 个 1 kHz 周期
     vo_u = np.interp(grid, ti, vo)
     spec = np.abs(np.fft.rfft(vo_u - vo_u.mean()))
-    # 频率分辨率 = 1/(100µs−60µs) = 25 kHz，所以 100 kHz 落在第 4 根谱线上。
-    # 第一版我直接取了 spec[1]（那是 25 kHz 的分量），量出来的增益自然是错的。
-    bin_idx = int(round(100e3 * (grid[-1] - grid[0])))
+    # 频率分辨率 = 1/(5ms−1ms) = 250 Hz，所以 1 kHz 落在第 4 根谱线上。
+    # 第一版我直接取了 spec[1]（那是 250 Hz 的分量），量出来的增益自然是错的。
+    bin_idx = int(round(F_SIG * (grid[-1] - grid[0])))
     amp_out = 2 * spec[bin_idx] / len(grid)   # 实数信号的单边谱要乘 2
     lin_rows.append((amp, amp_out, amp_out / amp))
     print(f"{amp * 1e3:>9.1f} mV{amp_out * 1e3:>12.3f} mV{amp_out / amp:>12.3f}"
@@ -495,7 +513,7 @@ b1.plot(tt * 1e6, vv_out * 1e3, color="#2f6fb3", linewidth=1.8, label="输出交
 b1.axhline(0, color="#c8d2dc", linewidth=0.8)
 b1.set_xlabel("时间 (µs)")
 b1.set_ylabel("交流分量 (mV)")
-b1.set_title(f"瞬态波形（100 kHz，输入 {trans_amp * 1e3:.0f} mV）：输出反相 180°")
+b1.set_title(f"瞬态波形（{F_SIG / 1000:.0f} kHz，输入 {trans_amp * 1e3:.0f} mV）：输出反相 180°")
 b1.legend(fontsize=9)
 b1.grid(alpha=0.3)
 
