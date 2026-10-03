@@ -169,13 +169,13 @@ async function evalJs(expr) {
 
   console.log('================= 冒烟测试结果 =================');
   console.log('页面标题          ' + out.title);
-  console.log('核心逻辑已加载    ' + out.coreLoaded);
+  console.log('核心逻辑已加载    ' + (out.coreLoaded ? '是（COLS=' + out.coreLoaded + '）' : '否 ✗'));
   console.log('canvas            CSS ' + out.canvas.cssW + '×' + out.canvas.cssH +
               ' / 缓冲区 ' + out.canvas.bufW + '×' + out.canvas.bufH +
               ' / 正方形 ' + (out.canvas.square ? '是' : '否 ✗'));
   console.log('HUD 溢出标签      ' + (out.hudOverflow.length ? out.hudOverflow.join(' , ') + ' ✗' : '无'));
   console.log('AI 模式按钮高亮   ' + out.ai.aiButtonOn);
-  console.log('AI 2.2 秒后       ' + out.ai.score + ' 分 · ' + out.ai.target + ' · 日志 ' + out.ai.logLines + ' 条');
+  console.log('AI 2.2 秒后       ' + out.ai.status + ' 分 · ' + out.ai.target + ' · 日志 ' + out.ai.logLines + ' 条');
   console.log('  最新决策        ' + out.aiLater.note);
   console.log('AI 再跑 2.5 秒    ' + out.aiLater.score + ' 分');
   console.log('深色主题切换      ' + (out.darkOk ? 'OK' : '失败 ✗'));
