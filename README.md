@@ -20,7 +20,7 @@
 
 > GitHub Pages 开启方式：仓库 Settings → Pages → Source 选 `Deploy from a branch`，Branch 选 `main` / `root`。
 >
-> PDF 给了两个入口：`.github.io` 走 Pages CDN，国内打开比 GitHub 的 blob 预览快得多；>   
+> PDF 给了两个入口：`.github.io` 走 Pages CDN，国内打开比 GitHub 的 blob 预览快得多；  
 > blob 那个是仓库原始文件，用来确认文件确实在仓库里。
 
 ---
@@ -151,7 +151,7 @@ node tools/build-single.js      # 生成 game/snake-standalone.html
 
 #### 压测结果（真实数据，可复现）
 
-任务书指标：AI 自动玩需要**连续吃满 15 个不放死**。
+任务书指标：AI 自动玩需要**连续吃满 15 个食物不死**。
 
 命令行版（`node tools/stress-test.js 300`）：
 
@@ -312,7 +312,7 @@ assert abs(0.5 * KP * (W / L) - K_TARGET) < 1e-9, "等效 K 与题卡不符"
 
 **第 3 轮 · 贪吃蛇 AI（提示词原文，最关键的一轮）**
 
-> 让 AI 自动玩，指标是**连续吃满 15 个不放死**。我明确要求不能只做"每次朝最近的食物走"。
+> 让 AI 自动玩，指标是**连续吃满 15 个食物不死**。我明确要求不能只做"每次朝最近的食物走"。
 
 → **结果**：首版跑 100 局，**达标率 0%**，平均 0.38 分。  
 → **改法**：**不重写、先查证** —— 驱动 AI 生成逐步打印脚本，自己运行后看到 AI 一直在"兜底 / 追尾"、从不追食物，从而定位到两个 bug（BFS 距离场方向算反、蛇头被错当成墙）。改完 **0% → 100%**。
@@ -459,8 +459,8 @@ python circuit/nmos_amp.py       # 电路③ NMOS 共源放大器
 
 Windows 上也可以用 `circuit/run.bat` 一键运行（`run.bat thevenin` / `run.bat nmos` / `run.bat all`），它会自动找到装了 PySpice 的解释器。
 
-> **Windows 用户注意**：`pip install PySpice` 装的包**不含 ngspice 动态库**，>   
-> 首次运行会报 `cannot load library ngspice.dll error 0x7e`——解决过程见>   
+> **Windows 用户注意**：`pip install PySpice` 装的包**不含 ngspice 动态库**，  
+> 首次运行会报 `cannot load library ngspice.dll error 0x7e`——解决过程见  
 > [`circuit/README.md`](circuit/README.md#踩坑记录)，`circuit/spice_env.py` 负责自动定位并加载这些库。
 
 ---

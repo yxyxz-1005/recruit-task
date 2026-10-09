@@ -20,7 +20,7 @@ const scores = [];
 let reached = 0;      // 达到「连续吃满 15 个」的局数
 let lastStepEnd = 0;
 
-console.log('贪吃蛇 AI 压测 · 棋盘 %d×%d · 目标：连续吃满 %d 个不放死', core.COLS, core.ROWS, TARGET);
+console.log('贪吃蛇 AI 压测 · 棋盘 %d×%d · 目标：连续吃满 %d 个不死', core.COLS, core.ROWS, TARGET);
 console.log('规则与网页版共用 game/snake-core.js，逐局完整模拟，无可视化开销。');
 console.log('');
 
